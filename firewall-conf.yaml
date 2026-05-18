@@ -18,6 +18,7 @@
     ufw_tcp_ports:
       - { port: 80,  comment: "HTTP"  }
       - { port: 443, comment: "HTTPS" }
+      - { port: 6443, comment: "KUBE-API" }
 
     # Ports UDP à ouvrir (vide par défaut)
     ufw_udp_ports: []
