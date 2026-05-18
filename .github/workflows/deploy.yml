@@ -27,7 +27,7 @@ jobs:
       - name: Prepare SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ansible
+          echo "${{ secrets.SSH_PRIVATE_PATH }}" > ~/.ssh/id_ansible
           chmod 600 ~/.ssh/id_ansible
           ssh-keyscan -H "${{ secrets.SERVER_IP }}" >> ~/.ssh/known_hosts
 
