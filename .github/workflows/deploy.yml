@@ -58,13 +58,6 @@ jobs:
             -i /tmp/inventory.ini \
             -v
 
-      - name: Deploy n8n manifest
-        run: |
-          ansible -i /tmp/inventory.ini all -m copy \
-            -a "src=k3s/n8n-manifest.yaml dest=/tmp/n8n-manifest.yaml"
-          ansible -i /tmp/inventory.ini all -m command \
-            -a "kubectl apply -f /tmp/n8n-manifest.yaml"
-
       - name: Cleanup SSH key
         if: always()
         run: rm -f ~/.ssh/id_ansible
