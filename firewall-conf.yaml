@@ -1,0 +1,102 @@
+---
+# =============================================================================
+# Playbook : Configuration UFW — Debian
+# =============================================================================
+# Usage :
+#   ansible-playbook configure_ufw.yml -i inventory.ini
+# =============================================================================
+
+- name: Installation et configuration UFW
+  hosts: all
+  become: true
+
+  vars:
+    # Port SSH — à adapter si vous utilisez un port custom
+    ufw_ssh_port: 22
+
+    # Ports TCP à ouvrir
+    ufw_tcp_ports:
+      - { port: 80,  comment: "HTTP"  }
+      - { port: 443, comment: "HTTPS" }
+
+    # Ports UDP à ouvrir (vide par défaut)
+    ufw_udp_ports: []
+
+    # IPs/CIDR autorisés pour SSH (vide = tout le monde)
+    # Exemple : ["192.168.1.0/24", "10.0.0.5"]
+    ufw_ssh_allowed_sources: []
+
+    # IPs/CIDR à bloquer explicitement
+    ufw_blocked_ips: []
+
+  tasks:
+
+    - name: Installer UFW
+      ansible.builtin.apt:
+        name: ufw
+        state: present
+        update_cache: true
+
+    - name: Politique par défaut — refuser en entrée
+      community.general.ufw:
+        default: deny
+        direction: incoming
+
+    - name: Politique par défaut — autoriser en sortie
+      community.general.ufw:
+        default: allow
+        direction: outgoing
+
+    - name: Autoriser SSH (toutes sources)
+      community.general.ufw:
+        rule: allow
+        port: "{{ ufw_ssh_port | string }}"
+        proto: tcp
+        comment: "SSH"
+      when: ufw_ssh_allowed_sources | length == 0
+
+    - name: Autoriser SSH (sources restreintes)
+      community.general.ufw:
+        rule: allow
+        port: "{{ ufw_ssh_port | string }}"
+        proto: tcp
+        src: "{{ item }}"
+        comment: "SSH from {{ item }}"
+      loop: "{{ ufw_ssh_allowed_sources }}"
+      when: ufw_ssh_allowed_sources | length > 0
+
+    - name: Ouvrir les ports TCP
+      community.general.ufw:
+        rule: allow
+        port: "{{ item.port | string }}"
+        proto: tcp
+        comment: "{{ item.comment | default('') }}"
+      loop: "{{ ufw_tcp_ports }}"
+
+    - name: Ouvrir les ports UDP
+      community.general.ufw:
+        rule: allow
+        port: "{{ item.port | string }}"
+        proto: udp
+        comment: "{{ item.comment | default('') }}"
+      loop: "{{ ufw_udp_ports }}"
+
+    - name: Bloquer des IPs explicites
+      community.general.ufw:
+        rule: deny
+        src: "{{ item }}"
+        comment: "Blocked"
+      loop: "{{ ufw_blocked_ips }}"
+
+    - name: Activer UFW
+      community.general.ufw:
+        state: enabled
+
+    - name: Afficher le statut UFW
+      ansible.builtin.command: ufw status verbose
+      register: ufw_status
+      changed_when: false
+
+    - name: Résumé
+      ansible.builtin.debug:
+        msg: "{{ ufw_status.stdout_lines }}"

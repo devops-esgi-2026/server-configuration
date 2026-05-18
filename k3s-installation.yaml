@@ -1,0 +1,94 @@
+---
+# =============================================================================
+# Playbook : K3s — Single Node Master (avec Traefik, sans Nginx)
+# =============================================================================
+# Usage :
+#   ansible-playbook install_k3s_single.yml -i inventory.ini
+#
+# Désinstallation :
+#   ansible-playbook install_k3s_single.yml -i inventory.ini -e "k3s_uninstall=true"
+# =============================================================================
+
+- name: Installation K3s single node master
+  hosts: all
+  become: true
+
+  vars:
+    k3s_version: ""                        # Vide = dernière version stable
+    k3s_node_name: "{{ inventory_hostname }}"
+    k3s_kubeconfig_mode: "0644"
+    k3s_uninstall: false
+
+  tasks:
+
+    - name: Désinstaller K3s
+      ansible.builtin.command: /usr/local/bin/k3s-uninstall.sh
+      args:
+        removes: /usr/local/bin/k3s-uninstall.sh
+      when: k3s_uninstall | bool
+
+    - name: Fin du playbook après désinstallation
+      ansible.builtin.meta: end_play
+      when: k3s_uninstall | bool
+
+    - name: Désactiver le swap
+      ansible.builtin.command: swapoff -a
+      changed_when: false
+
+    - name: Supprimer le swap dans /etc/fstab
+      ansible.builtin.replace:
+        path: /etc/fstab
+        regexp: '^([^#].*\sswap\s.*)$'
+        replace: '# \1'
+
+    - name: Installer curl
+      ansible.builtin.package:
+        name: curl
+        state: present
+
+    - name: Installer K3s avec Traefik (sans Nginx, sans ServiceLB)
+      ansible.builtin.shell: |
+        curl -sfL https://get.k3s.io | \
+          {% if k3s_version != "" %}INSTALL_K3S_VERSION="{{ k3s_version }}" {% endif %}
+          INSTALL_K3S_EXEC="server \
+            --node-name {{ k3s_node_name }} \
+            --disable servicelb \
+            --write-kubeconfig-mode {{ k3s_kubeconfig_mode }}" \
+          sh -
+      args:
+        creates: /usr/local/bin/k3s
+
+    - name: Activer et démarrer K3s
+      ansible.builtin.systemd:
+        name: k3s
+        enabled: true
+        state: started
+
+    - name: Attendre que le nœud soit prêt
+      ansible.builtin.command: k3s kubectl wait --for=condition=Ready node/{{ k3s_node_name }} --timeout=120s
+      changed_when: false
+
+    - name: Copier le kubeconfig dans ~/.kube/config
+      ansible.builtin.copy:
+        src: /etc/rancher/k3s/k3s.yaml
+        dest: "{{ ansible_env.HOME }}/.kube/config"
+        remote_src: true
+        mode: "0600"
+
+    - name: Vérifier les nœuds
+      ansible.builtin.command: k3s kubectl get nodes -o wide
+      register: nodes_out
+      changed_when: false
+
+    - name: Afficher les nœuds
+      ansible.builtin.debug:
+        msg: "{{ nodes_out.stdout_lines }}"
+
+    - name: Vérifier que Traefik tourne
+      ansible.builtin.command: k3s kubectl get pods -n kube-system -l app.kubernetes.io/name=traefik
+      register: traefik_out
+      changed_when: false
+
+    - name: Afficher le statut Traefik
+      ansible.builtin.debug:
+        msg: "{{ traefik_out.stdout_lines }}"
