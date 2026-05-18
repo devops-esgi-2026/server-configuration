@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: server-configuration-repo
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+type: Opaque
+stringData:
+  type: git
+  url: https://github.com/devops-esgi-2026/server-configuration.git
+  # Pour un repo privé, décommenter et renseigner un token GitHub :
+  # username: __GITHUB_USERNAME__
+  # password: __GITHUB_TOKEN__
