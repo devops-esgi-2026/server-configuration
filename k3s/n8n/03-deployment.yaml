@@ -1,0 +1,78 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: n8n
+  namespace: n8n
+  labels:
+    app: n8n
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: n8n
+  strategy:
+    type: Recreate # Nécessaire avec un volume ReadWriteOnce
+  template:
+    metadata:
+      labels:
+        app: n8n
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: n8n
+          image: n8nio/n8n:latest
+          ports:
+            - containerPort: 5678
+              name: http
+          env:
+            - name: N8N_HOST
+              value: "0.0.0.0"
+            - name: N8N_PORT
+              value: "5678"
+            - name: N8N_PROTOCOL
+              value: "http"
+            - name: WEBHOOK_URL
+              value: "http://__SERVER_IP__/" # Remplacé par le workflow
+            - name: N8N_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: n8n-secrets
+                  key: encryption-key
+            - name: GENERIC_TIMEZONE
+              value: "Europe/Paris"
+            - name: TZ
+              value: "Europe/Paris"
+            - name: DB_TYPE
+              value: "sqlite"
+            - name: N8N_USER_FOLDER
+              value: "/home/node/.n8n"
+          volumeMounts:
+            - name: n8n-data
+              mountPath: /home/node/.n8n
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 5678
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 5678
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: n8n-data
+          persistentVolumeClaim:
+            claimName: n8n-pvc

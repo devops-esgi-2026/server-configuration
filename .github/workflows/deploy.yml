@@ -58,6 +58,26 @@ jobs:
             -i /tmp/inventory.ini \
             -v
 
+      - name: Deploy n8n
+        env:
+          N8N_ENCRYPTION_KEY: ${{ secrets.N8N_ENCRYPTION_KEY }}
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+        run: |
+          # Substituer les placeholders dans les manifests
+          mkdir -p /tmp/n8n
+          for f in k3s/n8n/*.yaml; do
+            sed \
+              -e "s|__N8N_ENCRYPTION_KEY__|${N8N_ENCRYPTION_KEY}|g" \
+              -e "s|__SERVER_IP__|${SERVER_IP}|g" \
+              "$f" > "/tmp/n8n/$(basename $f)"
+          done
+
+          # Copier les manifests sur le serveur et appliquer
+          ansible -i /tmp/inventory.ini all -m copy \
+            -a "src=/tmp/n8n/ dest=/tmp/n8n-manifests/ mode=0600"
+          ansible -i /tmp/inventory.ini all -m command \
+            -a "kubectl apply -f /tmp/n8n-manifests/"
+
       - name: Cleanup SSH key
         if: always()
         run: rm -f ~/.ssh/id_ansible
