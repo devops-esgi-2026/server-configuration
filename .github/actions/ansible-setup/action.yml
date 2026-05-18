@@ -1,0 +1,21 @@
+name: Ansible Setup
+description: Cache e instalação do Ansible + community.general
+
+runs:
+  using: composite
+  steps:
+    - name: Cache pip (Ansible)
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-ansible
+
+    - name: Install Ansible
+      shell: bash
+      run: |
+        pip install --quiet ansible
+        ansible --version
+
+    - name: Install Ansible community.general collection
+      shell: bash
+      run: ansible-galaxy collection install community.general

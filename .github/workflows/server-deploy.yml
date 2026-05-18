@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'server-setup/**'
-      - '.github/workflows/server-deploy.yml'
+      - "server-setup/**"
+      - ".github/workflows/server-deploy.yml"
   workflow_dispatch:
 
 jobs:
@@ -18,14 +18,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Ansible
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y ansible
-          ansible --version
-
-      - name: Install Ansible community.general collection
-        run: ansible-galaxy collection install community.general
+      - name: Setup Ansible
+        uses: ./.github/actions/ansible-setup
 
       - name: Prepare SSH key
         run: |
@@ -60,6 +54,11 @@ jobs:
           ansible-playbook server-setup/firewall-conf.yaml \
             -i /tmp/inventory.ini \
             -v
+
+      - name: Patch Traefik externalIPs
+        run: |
+          ansible -i /tmp/inventory.ini all -m command \
+            -a "kubectl patch svc traefik -n kube-system -p '{\"spec\":{\"externalIPs\":[\"${{ secrets.SERVER_IP }}\"]}}'"
 
       - name: Cleanup SSH key
         if: always()
