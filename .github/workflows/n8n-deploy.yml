@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
   workflow_run:
     workflows:
-      - "Deploy K3s + Firewall"
+      - "Deploy n8n on K3s"
     types:
       - completed
     branches:
