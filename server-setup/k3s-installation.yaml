@@ -46,13 +46,12 @@
         name: curl
         state: present
 
-    - name: Installer K3s avec Traefik (sans Nginx, sans ServiceLB)
+    - name: Installer K3s avec Traefik et ServiceLB
       ansible.builtin.shell: |
         curl -sfL https://get.k3s.io | \
           {% if k3s_version != "" %}INSTALL_K3S_VERSION="{{ k3s_version }}" {% endif %}
           INSTALL_K3S_EXEC="server \
             --node-name {{ k3s_node_name }} \
-            --disable servicelb \
             --write-kubeconfig-mode {{ k3s_kubeconfig_mode }}" \
           sh -
       args:
