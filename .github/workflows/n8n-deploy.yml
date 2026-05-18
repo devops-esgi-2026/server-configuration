@@ -5,11 +5,11 @@ on:
     branches:
       - main
     paths:
-      - 'k3s/n8n/**'
+      - "k3s/n8n/**"
   workflow_dispatch:
   workflow_run:
     workflows:
-      - "Deploy n8n on K3s"
+      - "Deploy K3s + Firewall" # Nom du workflow de déploiement du serveur
     types:
       - completed
     branches:
@@ -19,6 +19,7 @@ jobs:
   deploy:
     name: Ansible — K3s & UFW
     runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - name: Deploy n8n
