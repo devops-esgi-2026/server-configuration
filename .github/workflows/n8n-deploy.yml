@@ -1,4 +1,4 @@
-name: Deploy K3s + Firewall
+name: Deploy n8n on K3s
 
 on:
   push:
