@@ -48,13 +48,13 @@ jobs:
 
       - name: Deploy K3s
         run: |
-          ansible-playbook server-configuration/k3s-installation.yaml \
+          ansible-playbook k3s-installation.yaml \
             -i /tmp/inventory.ini \
             -v
 
       - name: Configure Firewall (UFW)
         run: |
-          ansible-playbook server-configuration/firewall-conf.yaml \
+          ansible-playbook firewall-conf.yaml \
             -i /tmp/inventory.ini \
             -v
 
