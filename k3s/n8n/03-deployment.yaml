@@ -46,6 +46,8 @@ spec:
               value: "Europe/Paris"
             - name: TZ
               value: "Europe/Paris"
+            - name: N8N_SECURE_COOKIE
+              value: "false"
             - name: DB_TYPE
               value: "sqlite"
             - name: N8N_USER_FOLDER

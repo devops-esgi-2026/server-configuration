@@ -1,0 +1,88 @@
+name: Deploy K3s + Firewall
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Ansible — K3s & UFW
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Ansible
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ansible
+          ansible --version
+
+      - name: Install Ansible community.general collection
+        run: ansible-galaxy collection install community.general
+
+      - name: Prepare SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY_PATH }}" > ~/.ssh/id_ansible
+          chmod 600 ~/.ssh/id_ansible
+          ssh-keyscan -H "${{ secrets.SERVER_IP }}" >> ~/.ssh/known_hosts
+
+      - name: Create inventory
+        run: |
+          cat > /tmp/inventory.ini <<EOF
+          [all]
+          k3s-master ansible_host=${{ secrets.SERVER_IP }}
+
+          [all:vars]
+          ansible_user=root
+          ansible_port=22
+          ansible_ssh_private_key_file=~/.ssh/id_ansible
+          ansible_python_interpreter=/usr/bin/python3
+          ansible_become=true
+          ansible_become_method=sudo
+          EOF
+
+      - name: Deploy K3s
+        run: |
+          ansible-playbook server-setup/k3s-installation.yaml \
+            -i /tmp/inventory.ini \
+            -v
+
+      - name: Configure Firewall (UFW)
+        run: |
+          ansible-playbook server-setup/firewall-conf.yaml \
+            -i /tmp/inventory.ini \
+            -v
+
+      - name: Patch Traefik externalIPs
+        run: |
+          ansible -i /tmp/inventory.ini all -m command \
+            -a "kubectl patch svc traefik -n kube-system -p '{\"spec\":{\"externalIPs\":[\"${{ secrets.SERVER_IP }}\"]}}'"
+
+      - name: Deploy n8n
+        env:
+          N8N_ENCRYPTION_KEY: ${{ secrets.N8N_ENCRYPTION_KEY }}
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+        run: |
+          # Substituer les placeholders dans les manifests
+          mkdir -p /tmp/n8n
+          for f in k3s/n8n/*.yaml; do
+            sed \
+              -e "s|__N8N_ENCRYPTION_KEY__|${N8N_ENCRYPTION_KEY}|g" \
+              -e "s|__SERVER_IP__|${SERVER_IP}|g" \
+              "$f" > "/tmp/n8n/$(basename $f)"
+          done
+
+          # Copier les manifests sur le serveur et appliquer
+          ansible -i /tmp/inventory.ini all -m copy \
+            -a "src=/tmp/n8n/ dest=/tmp/n8n-manifests/ mode=0600"
+          ansible -i /tmp/inventory.ini all -m command \
+            -a "kubectl apply -f /tmp/n8n-manifests/"
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/id_ansible
