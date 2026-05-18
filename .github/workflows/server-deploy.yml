@@ -55,11 +55,6 @@ jobs:
             -i /tmp/inventory.ini \
             -v
 
-      - name: Patch Traefik externalIPs
-        run: |
-          ansible -i /tmp/inventory.ini all -m command \
-            -a "kubectl patch svc traefik -n kube-system -p '{\"spec\":{\"externalIPs\":[\"${{ secrets.SERVER_IP }}\"]}}'"
-
       - name: Cleanup SSH key
         if: always()
         run: rm -f ~/.ssh/id_ansible
