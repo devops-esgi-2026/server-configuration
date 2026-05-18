@@ -1,0 +1,63 @@
+name: Deploy K3s + Firewall
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Ansible — K3s & UFW
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Ansible
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ansible
+          ansible --version
+
+      - name: Install Ansible community.general collection
+        run: ansible-galaxy collection install community.general
+
+      - name: Prepare SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ansible
+          chmod 600 ~/.ssh/id_ansible
+          ssh-keyscan -H "${{ secrets.SERVER_IP }}" >> ~/.ssh/known_hosts
+
+      - name: Create inventory
+        run: |
+          cat > /tmp/inventory.ini <<EOF
+          [all]
+          k3s-master ansible_host=${{ secrets.SERVER_IP }}
+
+          [all:vars]
+          ansible_user=root
+          ansible_port=22
+          ansible_ssh_private_key_file=~/.ssh/id_ansible
+          ansible_python_interpreter=/usr/bin/python3
+          ansible_become=true
+          ansible_become_method=sudo
+          EOF
+
+      - name: Deploy K3s
+        run: |
+          ansible-playbook server-configuration/k3s-installation.yaml \
+            -i /tmp/inventory.ini \
+            -v
+
+      - name: Configure Firewall (UFW)
+        run: |
+          ansible-playbook server-configuration/firewall-conf.yaml \
+            -i /tmp/inventory.ini \
+            -v
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/id_ansible
