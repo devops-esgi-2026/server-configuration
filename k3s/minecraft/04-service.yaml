@@ -16,22 +16,3 @@ spec:
       protocol: TCP
 
   type: ClusterIP
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: crafty
-  namespace: minecraft
-spec:
-  selector:
-    app: crafty
-  ports:
-    - name: crafty
-      port: 8123
-      targetPort: crafty
-
-    - name: craftys
-      port: 8443
-      targetPort: craftys
-  type: ClusterIP
