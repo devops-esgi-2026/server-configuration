@@ -21,9 +21,8 @@ spec:
                 name: backend
                 port:
                   name: back
-                  number: 80
   tls:
     hosts:
-        - backend.kube.silvus.me
+      - backend.kube.silvus.me
     secretName: backend-tls
       
