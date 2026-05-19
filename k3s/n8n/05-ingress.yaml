@@ -9,10 +9,10 @@ metadata:
     cert-manager.io/cluster-issuer: selfsigned-issuer
 spec:
   ingressClassName: traefik
-  tls:
-    - secretName: n8n-tls
+  
   rules:
-    - http:
+    - host: n8n.kube.silvus.me
+      http:
         paths:
           - path: /
             pathType: Prefix
@@ -21,3 +21,7 @@ spec:
                 name: n8n
                 port:
                   name: http
+  tls:
+    - secretName: n8n-tls
+      hosts:
+        - n8n.kube.silvus.me
