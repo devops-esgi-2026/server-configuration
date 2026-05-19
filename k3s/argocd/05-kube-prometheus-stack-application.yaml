@@ -43,7 +43,9 @@ spec:
                       storage: 20Gi
 
         alertmanager:
-          enabled: false
+          enabled: true
+          alertmanagerSpec:
+            configSecret: alertmanager-kube-prometheus-stack-alertmanager
 
         kubeEtcd:
           enabled: false
