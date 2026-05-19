@@ -21,3 +21,5 @@ stringData:
             send_resolved: true
             http_config:
               follow_redirects: true
+              tls_config:
+                insecure_skip_verify: true
