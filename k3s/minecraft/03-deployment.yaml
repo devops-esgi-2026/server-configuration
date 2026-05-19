@@ -1,0 +1,149 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minecraft
+  namespace: minecraft
+  labels:
+    app: minecraft
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minecraft
+  strategy:
+    type: Recreate
+
+  template:
+    metadata:
+      labels:
+        app: minecraft
+
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+
+      containers:
+        - name: minecraft
+          image: itzg/minecraft-server:latest
+
+          ports:
+            - containerPort: 25565
+              name: mc
+
+            - containerPort: 25575
+              name: rcon
+
+          env:
+            - name: EULA
+              value: "TRUE"
+
+            - name: INIT_MEMORY
+              value: "1G"
+
+            - name: MAX_MEMORY
+              value: "6G"
+
+            - name: ENABLE_AUTOPAUSE
+              value: "FALSE"
+
+            - name: ENABLE_RCON
+              value: "true"
+
+            - name: RCON_PORT
+              value: "25575"
+
+            - name: RCON_PASSWORD
+              value: "minecraft"
+
+          securityContext:
+            readOnlyRootFilesystem: false
+
+          volumeMounts:
+            - name: minecraft-data
+              mountPath: /data
+
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
+
+            limits:
+              cpu: "3"
+              memory: 8Gi
+
+          readinessProbe:
+            tcpSocket:
+              port: 25565
+
+            initialDelaySeconds: 60
+            periodSeconds: 10
+
+          livenessProbe:
+            tcpSocket:
+              port: 25565
+
+            initialDelaySeconds: 120
+            periodSeconds: 30
+
+      volumes:
+        - name: minecraft-data
+          persistentVolumeClaim:
+            claimName: minecraft-pvc
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crafty
+  namespace: minecraft
+  labels:
+    app: crafty
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: crafty
+
+  template:
+    metadata:
+      labels:
+        app: crafty
+
+    spec:
+      containers:
+        - name: crafty
+          image: registry.gitlab.com/crafty-controller/crafty-4:latest
+
+          ports:
+            - containerPort: 8123
+              name: crafty
+
+            - containerPort: 8443
+              name: craftys
+
+          env:
+            - name: TZ
+              value: "Europe/Paris"
+
+          volumeMounts:
+            - name: crafty-data
+              mountPath: /crafty
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+
+            limits:
+              cpu: "1"
+              memory: 1Gi
+
+      volumes:
+        - name: crafty-data
+          persistentVolumeClaim:
+            claimName: crafty-pvc
