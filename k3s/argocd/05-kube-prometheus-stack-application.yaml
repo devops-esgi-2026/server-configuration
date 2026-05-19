@@ -4,7 +4,7 @@ metadata:
   name: kube-prometheus-stack
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "3"
+    argocd.argoproj.io/sync-wave: "1"
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 spec:
@@ -43,17 +43,7 @@ spec:
                       storage: 20Gi
 
         alertmanager:
-          alertmanagerSpec:
-            configSecret: alertmanager-config-secret
-            storage:
-              volumeClaimTemplate:
-                spec:
-                  storageClassName: local-path
-                  accessModes:
-                    - ReadWriteOnce
-                  resources:
-                    requests:
-                      storage: 5Gi
+          enabled: false
 
         kubeEtcd:
           enabled: false
