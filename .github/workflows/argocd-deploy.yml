@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - ".github/workflows/argocd-deploy.yml"
+      - "k3s/argocd/**"
   workflow_dispatch:
   workflow_run:
     workflows:
