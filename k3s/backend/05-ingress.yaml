@@ -22,7 +22,7 @@ spec:
                 port:
                   name: back
   tls:
-    hosts:
+  - hosts:
       - backend.kube.silvus.me
     secretName: backend-tls
       

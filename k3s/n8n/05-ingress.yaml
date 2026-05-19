@@ -22,7 +22,7 @@ spec:
                 port:
                   name: http
   tls:
-    hosts:
+  - hosts:
         - n8n.kube.silvus.me
     secretName: n8n-tls
       
