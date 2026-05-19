@@ -6,6 +6,8 @@ metadata:
   namespace: minecraft
   annotations:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/service.serversscheme: https
+    traefik.ingress.kubernetes.io/service.serverstransport: minecraft-crafty-insecure@kubernetescrd
     cert-manager.io/cluster-issuer: selfsigned-issuer
 spec:
   ingressClassName: traefik
@@ -20,7 +22,7 @@ spec:
               service:
                 name: crafty
                 port:
-                  name: crafty
+                  name: craftys
 
   tls:
     - hosts:
