@@ -17,7 +17,7 @@ stringData:
     receivers:
       - name: 'n8n-webhook'
         webhook_configs:
-          - url: 'https://n8n.kube.silvus.me/webhook/workflow'
+          - url: 'https://n8n.kube.silvus.me/webhook/prometheus-alerts'
             send_resolved: true
             http_config:
               follow_redirects: true
