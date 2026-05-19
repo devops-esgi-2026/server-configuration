@@ -132,7 +132,7 @@ spec:
 
           volumeMounts:
             - name: crafty-data
-              mountPath: /crafty
+              mountPath: /crafty/app/config
 
           resources:
             requests:
