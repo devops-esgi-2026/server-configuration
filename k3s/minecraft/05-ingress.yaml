@@ -20,7 +20,7 @@ spec:
               service:
                 name: crafty
                 port:
-                  name: craftys
+                  name: crafty
 
   tls:
     - hosts:
