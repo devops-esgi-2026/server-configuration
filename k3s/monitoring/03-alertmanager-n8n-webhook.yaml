@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: alertmanager-kube-prometheus-stack-alertmanager
+  namespace: monitoring
+type: Opaque
+stringData:
+  alertmanager.yaml: |
+    global:
+      resolve_timeout: 5m
+    route:
+      group_by: ['alertname', 'namespace']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      receiver: 'n8n-webhook'
+    receivers:
+      - name: 'n8n-webhook'
+        webhook_configs:
+          - url: 'https://n8n.kube.silvus.me/webhook/prometheus-alerts'
+            send_resolved: true
+            http_config:
+              follow_redirects: true
+              tls_config:
+                insecure_skip_verify: true
