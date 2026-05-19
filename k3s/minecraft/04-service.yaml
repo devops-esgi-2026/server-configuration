@@ -15,7 +15,7 @@ spec:
       targetPort: mc
       protocol: TCP
 
-  type: LoadBalancer
+  type: ClusterIP
 
 ---
 apiVersion: v1
