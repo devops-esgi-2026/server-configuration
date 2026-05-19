@@ -6,6 +6,10 @@ metadata:
   namespace: kube-system
 spec:
   valuesContent: |-
+    additionalArguments:
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+
     ports:
       minecraft:
         port: 25565
