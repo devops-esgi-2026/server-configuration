@@ -57,7 +57,7 @@ jobs:
         run: |
           ansible -i /tmp/inventory.ini all -m shell -a "
             kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f - &&
-            kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/core-install.yaml &&
+            kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml &&
             kubectl wait --for=condition=available --timeout=120s deployment/argocd-server -n argocd 2>/dev/null || true &&
             kubectl wait --for=condition=available --timeout=120s deployment/argocd-repo-server -n argocd 2>/dev/null || true
           "
