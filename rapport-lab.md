@@ -32,6 +32,11 @@ Le workflow `server-deploy.yml` se déclenche sur push vers `main` (paths `serve
 
 Le workflow `argocd-deploy.yml` installe ArgoCD puis applique les manifestes `k3s/argocd/`.
 
+accès via port forward
+![alt text](image-4.png)
+
+![alt text](image-3.png)
+
 Les applications sont déployées en waves ordonnées :
 1. **Wave 1** — cert-manager + kubeseal (dépendances)
 2. **Wave 2** — Traefik (ingress controller)
@@ -47,11 +52,16 @@ Chaque `Application` ArgoCD pointe sur ce même repo, ArgoCD réconcilie en cont
   - `ClusterHighCPUUsage` — CPU > 60% pendant 20s → warning
   - `ClusterCriticalCPUUsage` — CPU > 70% pendant 20s → critical
 
+![alt text](image.png)
+
 ### 4. n8n + alertes Discord (Gabriel)
 
 - n8n déployé en K3s, filesystem read-only, volume PVC pour la persistance
 - Workflow n8n : réception des alertes Prometheus → notification Discord
 - SMTP configuré via Resend pour les notifications mail
+![alt text](image-2.png)
+
+![alt text](image-1.png)
 
 ### 5. Policies Rego (Gabriel)
 
