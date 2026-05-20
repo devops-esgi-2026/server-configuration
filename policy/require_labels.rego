@@ -15,7 +15,6 @@ deny contains msg if {
     )
 }
 
-# Label ausente no pod template (propagada para os Pods criados)
 deny contains msg if {
     is_workload
     not is_system_namespace
